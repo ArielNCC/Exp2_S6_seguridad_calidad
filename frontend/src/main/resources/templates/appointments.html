@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lista de Citas</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Citas agendadas</h1>
+    <div class="actions">
+        <a class="btn btn-primary" th:href="@{/appointments/new}">Agendar cita</a>
+        <a class="btn btn-primary" th:href="@{/billing}">Ver facturas</a>
+        <a class="btn btn-secondary" th:href="@{/home}">Volver a inicio</a>
+    </div>
+    <div class="table-wrapper">
+        <table class="patients-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Paciente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Motivo</th>
+                <th>Veterinario</th>
+                <th>Facturación</th>
+            </tr>
+            </thead>
+            <tbody id="appointmentsTableBody">
+            <tr><td colspan="7">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="/auth.js"></script>
+<script>
+    async function loadAppointments() {
+        console.log('-> Frontend: loadAppointments called');
+
+        try {
+            console.log('-> Frontend: GET /api/appointments');
+            const response = await apiFetch('/api/appointments');
+            console.log('<- Frontend: GET /api/appointments status=' + response.status);
+
+            const appointments = await response.json();
+            console.log('<- Frontend: GET /api/appointments body=', appointments);
+            const tbody = document.getElementById('appointmentsTableBody');
+            tbody.innerHTML = '';
+
+            if (!appointments.length) {
+                tbody.innerHTML = '<tr><td colspan="7">No hay citas agendadas.</td></tr>';
+                return;
+            }
+
+            appointments.forEach(appointment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${appointment.id}</td><td>${appointment.patientId}</td><td>${appointment.date}</td><td>${appointment.time}</td><td>${appointment.reason}</td><td>${appointment.veterinarian}</td><td><a class="btn btn-primary btn-small" href="/billing/new?appointmentId=${appointment.id}">Facturar</a></td>`;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Frontend: GET /api/appointments error=', error.message, error.stack);
+            document.getElementById('appointmentsTableBody').innerHTML = '<tr><td colspan="7">Error cargando citas.</td></tr>';
+        }
+    }
+
+    loadAppointments();
+</script>
+</body>
+</html>

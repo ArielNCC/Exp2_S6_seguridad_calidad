@@ -1,0 +1,309 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Mascotas en Adopcion</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Mascotas en adopcion</h1>
+    <div class="actions">
+        <a class="btn btn-primary" th:href="@{/pets/new}">Registrar mascota</a>
+        <a class="btn btn-secondary" th:href="@{/home}">Volver a inicio</a>
+    </div>
+
+    <form id="searchForm" class="patient-form" style="margin-bottom: 1rem;">
+        <div>
+            <label>Especie:</label>
+            <input type="text" id="species" placeholder="Perro, Gato..." />
+        </div>
+        <div>
+            <label>Genero:</label>
+            <select id="gender">
+                <option value="">Todos</option>
+                <option value="Macho">Macho</option>
+                <option value="Hembra">Hembra</option>
+            </select>
+        </div>
+        <div>
+            <label>Ubicacion:</label>
+            <input type="text" id="location" placeholder="Santiago" />
+        </div>
+        <div>
+            <label>Edad:</label>
+            <input type="number" id="age" min="0" placeholder="3" />
+        </div>
+        <div>
+            <label>Estado:</label>
+            <select id="status">
+                <option value="">Todos</option>
+                <option value="available" selected>Disponibles</option>
+                <option value="adopted">Adoptadas</option>
+                <option value="unavailable">No disponibles</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+            <button class="btn btn-secondary" type="button" id="btnReset">Limpiar</button>
+            <button class="btn btn-secondary" type="button" id="btnLoadAll">Ver todas</button>
+        </div>
+    </form>
+
+    <div id="petsMessage" style="margin-bottom: 0.75rem;"></div>
+
+    <div class="table-wrapper">
+        <table class="patients-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Foto</th>
+                <th>Nombre</th>
+                <th>Especie</th>
+                <th>Raza</th>
+                <th>Edad</th>
+                <th>Genero</th>
+                <th>Ubicacion</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="petsTableBody">
+            <tr><td colspan="10">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/auth.js"></script>
+<script>
+    let currentPets = [];
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function showMessage(text, isError) {
+        const message = document.getElementById('petsMessage');
+        message.textContent = text;
+        message.style.color = isError ? 'red' : '#333';
+    }
+
+    function getPetById(id) {
+        return currentPets.find(p => Number(p.id) === Number(id));
+    }
+
+    function getPrimaryPhoto(pet) {
+        if (!pet || !pet.photos) {
+            return '';
+        }
+
+        if (Array.isArray(pet.photos) && pet.photos.length > 0) {
+            return String(pet.photos[0] || '').trim();
+        }
+
+        if (typeof pet.photos === 'string') {
+            return pet.photos.trim();
+        }
+
+        return '';
+    }
+
+    function renderPets(pets) {
+        const tbody = document.getElementById('petsTableBody');
+        tbody.innerHTML = '';
+
+        if (!pets.length) {
+            tbody.innerHTML = '<tr><td colspan="10">No hay mascotas para mostrar.</td></tr>';
+            return;
+        }
+
+        pets.forEach(pet => {
+            const photo = getPrimaryPhoto(pet);
+            const isUnavailable = pet.status === 'unavailable';
+            const isAdopted = pet.status === 'adopted';
+            const cannotAdopt = isAdopted || isUnavailable;
+            const cannotSetUnavailable = isUnavailable || isAdopted;
+            const row = document.createElement('tr');
+            row.innerHTML =
+                '<td>' + escapeHtml(pet.id) + '</td>' +
+                '<td>' +
+                    (photo
+                        ? '<img class="pet-photo" src="' + escapeHtml(photo) + '" alt="Foto de ' + escapeHtml(pet.name || 'mascota') + '" loading="lazy" />'
+                        : '<span class="pet-photo-empty">Sin foto</span>') +
+                '</td>' +
+                '<td>' + escapeHtml(pet.name) + '</td>' +
+                '<td>' + escapeHtml(pet.species) + '</td>' +
+                '<td>' + escapeHtml(pet.breed) + '</td>' +
+                '<td>' + escapeHtml(pet.age) + '</td>' +
+                '<td>' + escapeHtml(pet.gender) + '</td>' +
+                '<td>' + escapeHtml(pet.location || '-') + '</td>' +
+                '<td>' + escapeHtml(pet.status || 'available') + '</td>' +
+                '<td>' +
+                    '<button class="btn btn-primary" type="button" ' +
+                        'onclick="markAsAdopted(' + Number(pet.id) + ')" ' +
+                        (cannotAdopt ? 'disabled' : '') +
+                    '>Adoptar</button> ' +
+                    '<button class="btn btn-secondary" type="button" ' +
+                        'onclick="markAsUnavailable(' + Number(pet.id) + ')" ' +
+                        (cannotSetUnavailable ? 'disabled' : '') +
+                    '>No disponible</button> ' +
+                    '<button class="btn btn-secondary" type="button" onclick="deletePet(' + Number(pet.id) + ')">Eliminar</button>' +
+                '</td>';
+            tbody.appendChild(row);
+        });
+    }
+
+    async function fetchPets(endpoint) {
+        showMessage('Cargando mascotas...', false);
+        const response = await fetch(endpoint);
+        if (!response.ok) {
+            throw new Error('No se pudieron obtener mascotas (' + response.status + ')');
+        }
+
+        const pets = await response.json();
+        currentPets = Array.isArray(pets) ? pets : [];
+        renderPets(currentPets);
+        showMessage('Se encontraron ' + currentPets.length + ' mascotas.', false);
+    }
+
+    async function loadAvailablePets() {
+        try {
+            await fetchPets('/api/pets/available');
+        } catch (error) {
+            showMessage(error.message, true);
+            document.getElementById('petsTableBody').innerHTML = '<tr><td colspan="10">Error cargando mascotas.</td></tr>';
+        }
+    }
+
+    async function searchPets(event) {
+        event.preventDefault();
+        const params = new URLSearchParams();
+        const species = document.getElementById('species').value.trim();
+        const gender = document.getElementById('gender').value;
+        const location = document.getElementById('location').value.trim();
+        const age = document.getElementById('age').value;
+        const status = document.getElementById('status').value;
+
+        if (species) params.append('species', species);
+        if (gender) params.append('gender', gender);
+        if (location) params.append('location', location);
+        if (age) params.append('age', age);
+        if (status) params.append('status', status);
+
+        const endpoint = '/api/pets/search' + (params.toString() ? ('?' + params.toString()) : '');
+        try {
+            await fetchPets(endpoint);
+        } catch (error) {
+            showMessage(error.message, true);
+            document.getElementById('petsTableBody').innerHTML = '<tr><td colspan="10">Error en busqueda de mascotas.</td></tr>';
+        }
+    }
+
+    async function markAsAdopted(id) {
+        const selectedPet = getPetById(id);
+        if (!selectedPet) {
+            showMessage('No se encontro la mascota seleccionada.', true);
+            return;
+        }
+
+        const payload = { ...selectedPet, status: 'adopted' };
+
+        try {
+            const response = await apiFetch('/api/pets/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error('No se pudo actualizar mascota: ' + errText);
+            }
+
+            await loadAvailablePets();
+            showMessage('Mascota marcada como adoptada.', false);
+        } catch (error) {
+            showMessage(error.message, true);
+        }
+    }
+
+    async function markAsUnavailable(id) {
+        const selectedPet = getPetById(id);
+        if (!selectedPet) {
+            showMessage('No se encontro la mascota seleccionada.', true);
+            return;
+        }
+
+        const payload = { ...selectedPet, status: 'unavailable' };
+
+        try {
+            const response = await apiFetch('/api/pets/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error('No se pudo actualizar mascota: ' + errText);
+            }
+
+            await loadAvailablePets();
+            showMessage('Mascota marcada como no disponible.', false);
+        } catch (error) {
+            showMessage(error.message, true);
+        }
+    }
+
+    async function deletePet(id) {
+        if (!window.confirm('Deseas eliminar esta mascota?')) {
+            return;
+        }
+
+        try {
+            const response = await apiFetch('/api/pets/' + id, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error('No se pudo eliminar mascota: ' + errText);
+            }
+
+            currentPets = currentPets.filter(pet => Number(pet.id) !== Number(id));
+            renderPets(currentPets);
+            showMessage('Mascota eliminada correctamente.', false);
+        } catch (error) {
+            showMessage(error.message, true);
+        }
+    }
+
+    document.getElementById('searchForm').addEventListener('submit', searchPets);
+    document.getElementById('btnLoadAll').addEventListener('click', async () => {
+        try {
+            await fetchPets('/api/pets');
+        } catch (error) {
+            showMessage(error.message, true);
+        }
+    });
+
+    document.getElementById('btnReset').addEventListener('click', async () => {
+        document.getElementById('searchForm').reset();
+        document.getElementById('status').value = 'available';
+        await loadAvailablePets();
+    });
+
+    loadAvailablePets();
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Comprobante de Factura</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container invoice-detail-page">
+    <div class="invoice-detail-actions no-print">
+        <a class="btn btn-secondary" href="/billing">Volver a facturas</a>
+        <button class="btn btn-primary" type="button" onclick="window.print()">Imprimir comprobante</button>
+    </div>
+
+    <section class="invoice-receipt" id="invoiceReceipt">
+        <div class="receipt-header">
+            <div>
+                <h1>Comprobante de Factura</h1>
+                <p>Clinica Veterinaria DUOC UC</p>
+            </div>
+            <div class="receipt-badge">
+                <span id="invoiceNumber">Factura #</span>
+            </div>
+        </div>
+
+        <div class="receipt-grid">
+            <div>
+                <h2>Datos de la factura</h2>
+                <p><strong>Fecha emisión:</strong> <span id="detailIssueDate">-</span></p>
+                <p><strong>Visita:</strong> <span id="detailAppointment">-</span></p>
+            </div>
+            <div>
+                <h2>Paciente</h2>
+                <p><strong>Nombre:</strong> <span id="detailPatientName">-</span></p>
+                <p><strong>Dueño:</strong> <span id="detailPatientOwner">-</span></p>
+                <p><strong>Especie/Raza:</strong> <span id="detailPatientSpecies">-</span></p>
+            </div>
+            <div>
+                <h2>Visita</h2>
+                <p><strong>Fecha:</strong> <span id="detailVisitDate">-</span></p>
+                <p><strong>Hora:</strong> <span id="detailVisitTime">-</span></p>
+                <p><strong>Motivo:</strong> <span id="detailVisitReason">-</span></p>
+                <p><strong>Veterinario:</strong> <span id="detailVeterinarian">-</span></p>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="patients-table">
+                <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Total línea</th>
+                </tr>
+                </thead>
+                <tbody id="detailItemsBody">
+                <tr><td colspan="5">Cargando detalle...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="receipt-totals">
+            <div><strong>Subtotal:</strong> <span id="detailSubtotal">-</span></div>
+            <div><strong>IVA:</strong> <span id="detailVatAmount">-</span></div>
+            <div><strong>Total:</strong> <span id="detailTotal">-</span></div>
+        </div>
+
+        <div class="receipt-notes">
+            <h2>Observaciones</h2>
+            <p id="detailNotes">Sin observaciones.</p>
+        </div>
+    </section>
+</div>
+
+<script src="/auth.js"></script>
+<script>
+    function formatCurrency(value) {
+        const amount = Number(value || 0);
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+    }
+
+    function getInvoiceIdFromPath() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        return segments[segments.length - 1];
+    }
+
+    async function fetchJson(url) {
+        const response = await apiFetch(url);
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || `Error consultando ${url}`);
+        }
+
+        return response.json();
+    }
+
+    function setText(id, value) {
+        document.getElementById(id).textContent = value || '-';
+    }
+
+    async function loadInvoiceDetail() {
+        const invoiceId = getInvoiceIdFromPath();
+        try {
+            const invoice = await fetchJson(`/api/invoices/${invoiceId}`);
+            const [appointments, patients] = await Promise.all([
+                fetchJson('/api/appointments'),
+                fetchJson('/api/patients')
+            ]);
+
+            const appointment = appointments.find(item => String(item.id) === String(invoice.appointmentId));
+            const patient = appointment ? patients.find(item => String(item.id) === String(appointment.patientId)) : null;
+
+            setText('invoiceNumber', `Factura #${invoice.id}`);
+            setText('detailIssueDate', invoice.issueDate);
+            setText('detailAppointment', appointment ? `Visita ${appointment.id}` : `Visita ${invoice.appointmentId}`);
+
+            setText('detailPatientName', patient?.name || 'No disponible');
+            setText('detailPatientOwner', patient?.owner || 'No disponible');
+            setText('detailPatientSpecies', patient ? `${patient.species} / ${patient.breed}` : 'No disponible');
+
+            setText('detailVisitDate', appointment?.date || 'No disponible');
+            setText('detailVisitTime', appointment?.time || 'No disponible');
+            setText('detailVisitReason', appointment?.reason || 'No disponible');
+            setText('detailVeterinarian', appointment?.veterinarian || 'No disponible');
+
+            setText('detailSubtotal', formatCurrency(invoice.subtotal));
+            setText('detailVatAmount', formatCurrency(invoice.vatAmount));
+            setText('detailTotal', formatCurrency(invoice.total));
+            setText('detailNotes', invoice.notes || 'Sin observaciones.');
+
+            const tbody = document.getElementById('detailItemsBody');
+            tbody.innerHTML = '';
+
+            if (!invoice.items || !invoice.items.length) {
+                tbody.innerHTML = '<tr><td colspan="5">La factura no tiene detalle.</td></tr>';
+                return;
+            }
+
+            invoice.items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.type}</td>
+                    <td>${item.description}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatCurrency(item.unitPrice)}</td>
+                    <td>${formatCurrency(item.lineTotal)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Frontend: invoice detail error=', error);
+            document.getElementById('invoiceReceipt').innerHTML = `<p class="form-error">${error.message || 'No fue posible cargar el comprobante.'}</p>`;
+        }
+    }
+
+    loadInvoiceDetail();
+</script>
+</body>
+</html>

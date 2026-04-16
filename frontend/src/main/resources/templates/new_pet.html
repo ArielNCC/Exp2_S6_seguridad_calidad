@@ -1,0 +1,127 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Registrar Mascota</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Registrar mascota para adopcion</h1>
+    <form id="petForm" class="patient-form">
+        <div>
+            <label>Nombre:</label>
+            <input type="text" id="name" required />
+        </div>
+        <div>
+            <label>Especie:</label>
+            <input type="text" id="species" required />
+        </div>
+        <div>
+            <label>Raza:</label>
+            <input type="text" id="breed" required />
+        </div>
+        <div>
+            <label>Edad:</label>
+            <input type="number" id="age" min="0" required />
+        </div>
+        <div>
+            <label>Genero:</label>
+            <select id="gender" required>
+                <option value="" disabled selected>Selecciona genero</option>
+                <option value="Macho">Macho</option>
+                <option value="Hembra">Hembra</option>
+            </select>
+        </div>
+        <div>
+            <label>Ubicacion:</label>
+            <input type="text" id="location" />
+        </div>
+        <div>
+            <label>Foto URL:</label>
+            <input type="url" id="photoUrl" placeholder="https://..." />
+        </div>
+        <div>
+            <label>Vista previa:</label>
+            <div>
+                <img id="photoPreview" class="pet-photo" alt="Vista previa de foto" style="display:none;" />
+                <span id="photoPreviewEmpty" class="pet-photo-empty">Sin foto</span>
+            </div>
+        </div>
+        <div>
+            <label>Estado:</label>
+            <select id="status" required>
+                <option value="available" selected>Disponible</option>
+                <option value="adopted">Adoptada</option>
+                <option value="unavailable">No disponible</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-secondary" href="/pets">Cancelar</a>
+        </div>
+
+        <div id="errorPet" style="color: red; margin-top: 1rem;"></div>
+    </form>
+</div>
+
+<script src="/auth.js"></script>
+<script>
+    function updatePhotoPreview() {
+        const photoUrl = document.getElementById('photoUrl').value.trim();
+        const preview = document.getElementById('photoPreview');
+        const empty = document.getElementById('photoPreviewEmpty');
+
+        if (!photoUrl) {
+            preview.style.display = 'none';
+            preview.removeAttribute('src');
+            empty.style.display = 'inline';
+            return;
+        }
+
+        preview.src = photoUrl;
+        preview.style.display = 'inline-block';
+        empty.style.display = 'none';
+    }
+
+    document.getElementById('photoUrl').addEventListener('input', updatePhotoPreview);
+
+    document.getElementById('petForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const photoUrl = document.getElementById('photoUrl').value.trim();
+        const body = {
+            name: document.getElementById('name').value.trim(),
+            species: document.getElementById('species').value.trim(),
+            breed: document.getElementById('breed').value.trim(),
+            age: parseInt(document.getElementById('age').value, 10),
+            gender: document.getElementById('gender').value,
+            location: document.getElementById('location').value.trim(),
+            status: document.getElementById('status').value,
+            photos: photoUrl ? [photoUrl] : []
+        };
+
+        try {
+            const response = await apiFetch('/api/pets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const err = await response.text();
+                document.getElementById('errorPet').textContent = 'Error: ' + err;
+                return;
+            }
+
+            window.location.href = '/pets';
+        } catch (error) {
+            document.getElementById('errorPet').textContent = 'Error al registrar mascota.';
+        }
+    });
+</script>
+</body>
+</html>

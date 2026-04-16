@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lista de Pacientes</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Pacientes registrados</h1>
+    <div class="actions">
+        <a class="btn btn-primary" th:href="@{/patients/new}">Registrar paciente</a>
+        <a class="btn btn-secondary" th:href="@{/home}">Volver a inicio</a>
+    </div>
+    <div class="table-wrapper">
+        <table class="patients-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Especie</th>
+                <th>Raza</th>
+                <th>Edad</th>
+                <th>Dueño</th>
+            </tr>
+            </thead>
+            <tbody id="patientsTableBody">
+            <tr id="emptyRow"><td colspan="6">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="/auth.js"></script>
+<script>
+    async function loadPatients() {
+        console.log('-> Frontend: loadPatients called');
+        try {
+            console.log('-> Frontend: GET /api/patients');
+            const response = await apiFetch('/api/patients');
+            console.log('<- Frontend: GET /api/patients status=' + response.status);
+
+            const patients = await response.json();
+            console.log('<- Frontend: GET /api/patients body=', patients);
+            const tbody = document.getElementById('patientsTableBody');
+            tbody.innerHTML = '';
+
+            if (!patients.length) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay pacientes registrados.</td></tr>';
+                return;
+            }
+
+            patients.forEach(patient => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${patient.id}</td><td>${patient.name}</td><td>${patient.species}</td><td>${patient.breed}</td><td>${patient.age}</td><td>${patient.owner}</td>`;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Frontend: GET /api/patients error=', error.message, error.stack);
+            document.getElementById('patientsTableBody').innerHTML = '<tr><td colspan="6">Error cargando pacientes.</td></tr>';
+        }
+    }
+
+    loadPatients();
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Facturas</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Facturas emitidas</h1>
+    <div class="actions">
+        <a class="btn btn-primary" th:href="@{/billing/new}">Generar factura</a>
+        <a class="btn btn-secondary" th:href="@{/home}">Volver a inicio</a>
+    </div>
+    <div class="table-wrapper">
+        <table class="patients-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Visita</th>
+                <th>Fecha emisión</th>
+                <th>Subtotal</th>
+                <th>IVA</th>
+                <th>Total</th>
+                <th>Observaciones</th>
+                <th>Detalle</th>
+            </tr>
+            </thead>
+            <tbody id="invoicesTableBody">
+            <tr><td colspan="8">Cargando facturas...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="/auth.js"></script>
+<script>
+    function formatCurrency(value) {
+        const amount = Number(value || 0);
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function renderItemSummary(items) {
+        if (!Array.isArray(items) || !items.length) {
+            return 'Sin detalle';
+        }
+        return items.map(item => `${item.description} (${item.quantity} x ${formatCurrency(item.unitPrice)})`).join(' | ');
+    }
+
+    async function loadReferenceData() {
+        const [appointmentsResponse, patientsResponse] = await Promise.all([
+            apiFetch('/api/appointments'),
+            apiFetch('/api/patients')
+        ]);
+
+        if (!appointmentsResponse.ok || !patientsResponse.ok) {
+            throw new Error('No fue posible cargar la información complementaria de citas y pacientes');
+        }
+
+        const appointments = await appointmentsResponse.json();
+        const patients = await patientsResponse.json();
+
+        const appointmentsById = new Map(appointments.map(appointment => [String(appointment.id), appointment]));
+        const patientsById = new Map(patients.map(patient => [String(patient.id), patient]));
+        return { appointmentsById, patientsById };
+    }
+
+    function buildVisitLabel(invoice, appointmentsById, patientsById) {
+        const appointment = appointmentsById.get(String(invoice.appointmentId));
+        if (!appointment) {
+            return `Visita ${invoice.appointmentId}`;
+        }
+
+        const patient = patientsById.get(String(appointment.patientId));
+        const patientName = patient ? patient.name : `Paciente ${appointment.patientId}`;
+        return `Visita ${appointment.id} - ${patientName}`;
+    }
+
+    async function loadInvoices() {
+        try {
+            const response = await apiFetch('/api/invoices');
+
+            if (!response.ok) {
+                throw new Error('No fue posible obtener las facturas');
+            }
+
+            const invoices = await response.json();
+            const { appointmentsById, patientsById } = await loadReferenceData();
+            const tbody = document.getElementById('invoicesTableBody');
+            tbody.innerHTML = '';
+
+            if (!invoices.length) {
+                tbody.innerHTML = '<tr><td colspan="8">Aún no hay facturas emitidas.</td></tr>';
+                return;
+            }
+
+            invoices.forEach(invoice => {
+                const row = document.createElement('tr');
+                const visitLabel = buildVisitLabel(invoice, appointmentsById, patientsById);
+                row.innerHTML = `
+                    <td>${invoice.id}</td>
+                    <td>${escapeHtml(visitLabel)}</td>
+                    <td>${invoice.issueDate || '-'}</td>
+                    <td>${formatCurrency(invoice.subtotal)}</td>
+                    <td>${formatCurrency(invoice.vatAmount)}</td>
+                    <td>${formatCurrency(invoice.total)}</td>
+                    <td>${invoice.notes || '-'}</td>
+                    <td>
+                        <div>${escapeHtml(renderItemSummary(invoice.items))}</div>
+                        <div class="invoice-table-actions">
+                            <a class="btn btn-secondary btn-small" href="/billing/${invoice.id}">Ver comprobante</a>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Frontend: GET /api/invoices error=', error);
+            document.getElementById('invoicesTableBody').innerHTML = '<tr><td colspan="8">Error cargando facturas.</td></tr>';
+        }
+    }
+
+    loadInvoices();
+</script>
+</body>
+</html>

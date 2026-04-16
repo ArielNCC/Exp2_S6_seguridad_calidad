@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+    <head>
+        <title>Login con JWT</title>
+        <link rel="stylesheet" type="text/css" href="/login.css">
+    </head>
+    <body>
+        <div id="errorMessage" style="color:red;"></div>
+        <form id="loginForm">
+            <div><label> User Name : <input type="text" id="username" name="username"/> </label></div>
+            <div><label> Password: <input type="password" id="password" name="password"/> </label></div>
+            <div><input type="submit" value="Sign In"/></div>
+        </form>
+
+        <script src="/auth.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', async function() {
+                if (await hasAuthSession()) {
+                    window.location.href = '/home';
+                }
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    console.log('-> Frontend: POST /api/auth/login username=', username);
+                    const response = await apiFetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        skipAuthRedirect: true,
+                        body: JSON.stringify({ username, password })
+                    });
+                    console.log('<- Frontend: POST /api/auth/login status=' + response.status);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Frontend: POST /api/auth/login error response=', errorText);
+                        document.getElementById('errorMessage').textContent = errorText;
+                        return;
+                    }
+
+                    console.log('<- Frontend: POST /api/auth/login cookie set');
+                    window.location.href = '/home';
+                } catch (error) {
+                    console.error('Frontend: POST /api/auth/login error=', error);
+                    document.getElementById('errorMessage').textContent = 'Error de conexión al backend.';
+                }
+            });
+        </script>
+    </body>
+</html>
+

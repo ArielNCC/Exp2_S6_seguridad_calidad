@@ -1,0 +1,823 @@
+{
+  "apiVersion": "1.0.0",
+  "apiName": "Pet Adoption API",
+  "baseUrl": "http://localhost:8080",
+  "productionUrl": "https://api.example.com",
+  "authentication": "JWT Bearer Token",
+  "description": "API RESTful para gestión de mascotas disponibles para adopción, pacientes y facturación de visitas",
+  "lastUpdated": "2026-03-28",
+
+  "endpoints": [
+    {
+      "id": "auth_login",
+      "method": "POST",
+      "path": "/login",
+      "summary": "Autenticar usuario",
+      "description": "Inicia sesión y obtiene un token JWT",
+      "protected": false,
+      "tags": ["Autenticación"],
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "example": "admin",
+              "required": true
+            },
+            "password": {
+              "type": "string",
+              "format": "password",
+              "example": "password123",
+              "required": true
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Autenticación exitosa",
+          "contentType": "application/json",
+          "schema": {
+            "type": "string",
+            "description": "JWT Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "400": {
+          "description": "Credenciales inválidas",
+          "contentType": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Login failed: User not found"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    {
+      "id": "auth_register",
+      "method": "POST",
+      "path": "/users/register",
+      "summary": "Registrar nuevo usuario",
+      "description": "Crea un usuario y almacena la contraseña de forma segura usando BCrypt. Requiere JWT válido.",
+      "protected": true,
+      "tags": ["Autenticación"],
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "example": "recepcionista01",
+              "required": true
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "example": "recepcion@duocvet.cl",
+              "required": true
+            },
+            "password": {
+              "type": "string",
+              "format": "password",
+              "example": "MiClaveSegura2026!",
+              "required": true
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Usuario registrado exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 7
+              },
+              "username": {
+                "type": "string",
+                "example": "recepcionista01"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "recepcion@duocvet.cl"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Datos inválidos o usuario duplicado",
+          "contentType": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Username already exists"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Se requiere autenticación JWT válida"
+        }
+      }
+    },
+
+    {
+      "id": "pets_list",
+      "method": "GET",
+      "path": "/pets",
+      "summary": "Obtener todas las mascotas",
+      "description": "Recupera la lista completa de mascotas registradas",
+      "protected": false,
+      "tags": ["Mascotas"],
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Lista de mascotas obtenida exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/Pet"
+            }
+          }
+        },
+        "500": {
+          "description": "Error interno del servidor"
+        }
+      }
+    },
+
+    {
+      "id": "pets_create",
+      "method": "POST",
+      "path": "/pets",
+      "summary": "Registrar nueva mascota",
+      "description": "Crea un nuevo registro de mascota disponible para adopción",
+      "protected": true,
+      "tags": ["Mascotas"],
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "contentType": "application/json",
+        "schema": {
+          "$ref": "#/components/Pet"
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Mascota registrada exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Pet"
+          }
+        },
+        "400": {
+          "description": "Datos inválidos"
+        }
+      }
+    },
+
+    {
+      "id": "pets_get_by_id",
+      "method": "GET",
+      "path": "/pets/{id}",
+      "summary": "Obtener mascota por ID",
+      "description": "Recupera la información detallada de una mascota específica",
+      "protected": false,
+      "tags": ["Mascotas"],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID de la mascota",
+          "example": 1
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Mascota encontrada",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Pet"
+          }
+        },
+        "404": {
+          "description": "Mascota no encontrada"
+        }
+      }
+    },
+
+    {
+      "id": "pets_update",
+      "method": "PUT",
+      "path": "/pets/{id}",
+      "summary": "Actualizar mascota",
+      "description": "Actualiza la información de una mascota existente",
+      "protected": true,
+      "tags": ["Mascotas"],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID de la mascota a actualizar",
+          "example": 1
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "contentType": "application/json",
+        "schema": {
+          "$ref": "#/components/Pet"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Mascota actualizada exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Pet"
+          }
+        },
+        "404": {
+          "description": "Mascota no encontrada"
+        }
+      }
+    },
+
+    {
+      "id": "pets_delete",
+      "method": "DELETE",
+      "path": "/pets/{id}",
+      "summary": "Eliminar mascota",
+      "description": "Elimina un registro de mascota del sistema",
+      "protected": true,
+      "tags": ["Mascotas"],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID de la mascota a eliminar",
+          "example": 1
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Mascota eliminada exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Mascota eliminada exitosamente"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Mascota no encontrada"
+        }
+      }
+    },
+
+    {
+      "id": "pets_available",
+      "method": "GET",
+      "path": "/pets/available",
+      "summary": "Obtener mascotas disponibles",
+      "description": "Recupera la lista de mascotas disponibles para adopción (status = available)",
+      "protected": false,
+      "tags": ["Mascotas"],
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Lista de mascotas disponibles obtenida exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/Pet"
+            }
+          }
+        }
+      }
+    },
+
+    {
+      "id": "pets_search",
+      "method": "GET",
+      "path": "/pets/search",
+      "summary": "Buscar mascotas por criterios",
+      "description": "Busca mascotas por uno o varios criterios (especie, género, ubicación, edad). Todos los parámetros son opcionales.",
+      "protected": false,
+      "tags": ["Mascotas"],
+      "parameters": [
+        {
+          "name": "species",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filtrar por especie",
+          "example": "Perro"
+        },
+        {
+          "name": "gender",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "enum": ["Macho", "Hembra"],
+          "description": "Filtrar por sexo",
+          "example": "Macho"
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filtrar por ubicación",
+          "example": "Santiago"
+        },
+        {
+          "name": "age",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filtrar por edad exacta",
+          "example": 3
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "enum": ["available", "adopted"],
+          "default": "available",
+          "description": "Filtrar por estado de disponibilidad",
+          "example": "available"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Búsqueda completada exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/Pet"
+            }
+          }
+        }
+      }
+    },
+
+    {
+      "id": "patients_list",
+      "method": "GET",
+      "path": "/patients",
+      "summary": "Obtener todos los pacientes",
+      "description": "Recupera la lista completa de pacientes registrados",
+      "protected": true,
+      "tags": ["Pacientes"],
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Lista de pacientes obtenida exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/Patient"
+            }
+          }
+        }
+      }
+    },
+
+    {
+      "id": "patients_create",
+      "method": "POST",
+      "path": "/patients",
+      "summary": "Registrar nuevo paciente",
+      "description": "Crea un nuevo registro de paciente en el sistema",
+      "protected": true,
+      "tags": ["Pacientes"],
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "contentType": "application/json",
+        "schema": {
+          "$ref": "#/components/Patient"
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Paciente registrado exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Patient"
+          }
+        }
+      }
+    },
+
+    {
+      "id": "patients_get_by_id",
+      "method": "GET",
+      "path": "/patients/{id}",
+      "summary": "Obtener paciente por ID",
+      "description": "Recupera la información de un paciente específico",
+      "protected": true,
+      "tags": ["Pacientes"],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID del paciente",
+          "example": 1
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Paciente encontrado",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Patient"
+          }
+        },
+        "404": {
+          "description": "Paciente no encontrado"
+        }
+      }
+    },
+
+    {
+      "id": "invoices_list",
+      "method": "GET",
+      "path": "/invoices",
+      "summary": "Obtener todas las facturas",
+      "description": "Recupera la lista completa de facturas emitidas",
+      "protected": true,
+      "tags": ["Facturas"],
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Lista de facturas obtenida exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/Invoice"
+            }
+          }
+        }
+      }
+    },
+
+    {
+      "id": "invoices_get_by_id",
+      "method": "GET",
+      "path": "/invoices/{id}",
+      "summary": "Obtener factura por ID",
+      "description": "Recupera una factura específica por su identificador",
+      "protected": true,
+      "tags": ["Facturas"],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID de la factura",
+          "example": 1
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Factura encontrada",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Invoice"
+          }
+        },
+        "404": {
+          "description": "Factura no encontrada"
+        }
+      }
+    },
+
+    {
+      "id": "invoices_get_by_appointment",
+      "method": "GET",
+      "path": "/invoices/appointment/{appointmentId}",
+      "summary": "Obtener factura por visita",
+      "description": "Recupera la factura asociada a una visita específica",
+      "protected": true,
+      "tags": ["Facturas"],
+      "parameters": [
+        {
+          "name": "appointmentId",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID de la visita",
+          "example": 10
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Factura encontrada para la visita",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Invoice"
+          }
+        },
+        "404": {
+          "description": "Visita o factura no encontrada"
+        }
+      }
+    },
+
+    {
+      "id": "invoices_create_for_appointment",
+      "method": "POST",
+      "path": "/invoices/appointments/{appointmentId}",
+      "summary": "Generar factura de visita",
+      "description": "Genera una factura detallada para una visita con servicios, medicamentos y cargos adicionales",
+      "protected": true,
+      "tags": ["Facturas"],
+      "parameters": [
+        {
+          "name": "appointmentId",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": "ID de la visita a facturar",
+          "example": 10
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "contentType": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["items"],
+          "properties": {
+            "issueDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-03-28"
+            },
+            "vatRate": {
+              "type": "number",
+              "example": 0.19
+            },
+            "notes": {
+              "type": "string",
+              "example": "Paciente estable. Control en 10 dias."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/InvoiceLineItem"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Factura generada exitosamente",
+          "contentType": "application/json",
+          "schema": {
+            "$ref": "#/components/Invoice"
+          }
+        },
+        "400": {
+          "description": "Datos inválidos o visita inexistente"
+        },
+        "409": {
+          "description": "Ya existe factura para la visita"
+        }
+      }
+    }
+  ],
+
+  "components": {
+    "Pet": {
+      "type": "object",
+      "required": ["name", "species", "breed", "age", "gender"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Identificador único de la mascota",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre de la mascota",
+          "example": "Max"
+        },
+        "species": {
+          "type": "string",
+          "description": "Especie de la mascota",
+          "example": "Perro"
+        },
+        "breed": {
+          "type": "string",
+          "description": "Raza de la mascota",
+          "example": "Golden Retriever"
+        },
+        "age": {
+          "type": "integer",
+          "description": "Edad de la mascota en años",
+          "example": 3
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["Macho", "Hembra"],
+          "description": "Sexo de la mascota",
+          "example": "Macho"
+        },
+        "location": {
+          "type": "string",
+          "description": "Ubicación geográfica de la mascota",
+          "example": "Santiago"
+        },
+        "photos": {
+          "type": "array",
+          "description": "Lista de URLs de fotos de la mascota",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "example": ["https://example.com/foto1.jpg", "https://example.com/foto2.jpg"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["available", "adopted"],
+          "default": "available",
+          "description": "Estado de disponibilidad",
+          "example": "available"
+        }
+      }
+    },
+
+    "Patient": {
+      "type": "object",
+      "required": ["name", "species", "breed", "age", "owner"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Identificador único del paciente",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre del paciente",
+          "example": "Firulais"
+        },
+        "species": {
+          "type": "string",
+          "description": "Especie del paciente",
+          "example": "Perro"
+        },
+        "breed": {
+          "type": "string",
+          "description": "Raza del paciente",
+          "example": "Labrador"
+        },
+        "age": {
+          "type": "integer",
+          "description": "Edad del paciente en años",
+          "example": 5
+        },
+        "owner": {
+          "type": "string",
+          "description": "Dueño del paciente",
+          "example": "Juan Pérez"
+        }
+      }
+    },
+
+    "InvoiceLineItemType": {
+      "type": "string",
+      "description": "Tipo de detalle de factura",
+      "enum": ["SERVICE", "MEDICATION", "ADDITIONAL_CHARGE"]
+    },
+
+    "InvoiceLineItem": {
+      "type": "object",
+      "required": ["type", "description", "quantity", "unitPrice"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Identificador del detalle",
+          "example": 1
+        },
+        "type": {
+          "$ref": "#/components/InvoiceLineItemType"
+        },
+        "description": {
+          "type": "string",
+          "description": "Descripción del servicio, medicamento o cargo",
+          "example": "Consulta general"
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Cantidad aplicada",
+          "example": 1
+        },
+        "unitPrice": {
+          "type": "number",
+          "description": "Precio unitario",
+          "example": 25000
+        },
+        "lineTotal": {
+          "type": "number",
+          "description": "Subtotal de la línea",
+          "example": 25000
+        }
+      }
+    },
+
+    "Invoice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Identificador de la factura",
+          "example": 1
+        },
+        "appointmentId": {
+          "type": "integer",
+          "description": "Identificador de la visita facturada",
+          "example": 10
+        },
+        "issueDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Fecha de emisión",
+          "example": "2026-03-28"
+        },
+        "vatRate": {
+          "type": "number",
+          "description": "Tasa de IVA aplicada",
+          "example": 0.19
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "Subtotal sin IVA",
+          "example": 43000
+        },
+        "vatAmount": {
+          "type": "number",
+          "description": "Monto de IVA",
+          "example": 8170
+        },
+        "total": {
+          "type": "number",
+          "description": "Total final",
+          "example": 51170
+        },
+        "notes": {
+          "type": "string",
+          "description": "Observaciones adicionales",
+          "example": "Paciente estable. Control en 10 dias."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/InvoiceLineItem"
+          }
+        }
+      }
+    }
+  }
+}

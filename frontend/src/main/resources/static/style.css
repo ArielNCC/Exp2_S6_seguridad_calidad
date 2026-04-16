@@ -1,0 +1,408 @@
+/* Basic styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  h1, h2 {
+    margin: 10px 0;
+  }
+  
+  /* Style the welcome message */
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+  
+  /* Style the authenticated user greeting */
+  .authenticated {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+  
+  h2 {
+    text-align: center;
+    color: #666;
+  }
+
+  /* Pacientes styles */
+  .page-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.05);
+  }
+
+  /* Home page styles */
+  .home-page {
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .home-header {
+    max-width: 680px;
+    margin: 0 auto 24px;
+  }
+
+  .home-header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+  }
+
+  .home-header p {
+    font-size: 1.1rem;
+    color: #555;
+  }
+
+  .home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .home-page {
+    text-align: center;
+    background: linear-gradient(120deg, #f4f6ff 0%, #ebf2ff 100%);
+    border: none;
+  }
+
+  .home-header {
+    margin-bottom: 18px;
+  }
+
+  .home-header h1 {
+    margin-bottom: 8px;
+    color: #2a4d8d;
+  }
+
+  .home-header p {
+    color: #56627a;
+    margin: 0;
+  }
+
+  .home-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .welcome-auth {
+    background-color: rgba(45, 124, 255, 0.08);
+    border: 1px solid rgba(45, 124, 255, 0.28);
+    border-radius: 8px;
+    padding: 12px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .welcome-auth h2 {
+    margin: 0 0 8px;
+    color: #1f3b7a;
+  }
+
+  .welcome-auth p {
+    margin: 0;
+    color: #334366;
+  }
+
+  .actions {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn {
+    display: inline-block;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .btn-small {
+    padding: 7px 10px;
+    font-size: 0.85rem;
+  }
+
+  .btn-primary {
+    background-color: #2d7cff;
+    color: white;
+    border-color: #1a59d6;
+  }
+
+  .btn-secondary {
+    background-color: #e6e6e6;
+    color: #333;
+    border-color: #bdbdbd;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .patients-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  .patients-table th, .patients-table td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .patients-table th {
+    background-color: #f8f9ff;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .patients-table tr:nth-child(even) {
+    background-color: #fafbff;
+  }
+
+  .patient-form > div {
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .patient-form label {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .patient-form input {
+    padding: 8px 10px;
+    border: 1px solid #c4c4c4;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .patient-form select {
+    padding: 8px 10px;
+    border: 1px solid #c4c4c4;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+  }
+
+  .patient-form textarea {
+    padding: 8px 10px;
+    border: 1px solid #c4c4c4;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    font: inherit;
+  }
+
+  .form-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .patient-form button, .patient-form a {
+    min-width: 100px;
+  }
+
+  .pet-photo {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #d6d6d6;
+    background: #f7f7f7;
+  }
+
+  .pet-photo-empty {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    color: #666;
+    background: #f2f2f2;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+
+  .invoice-page {
+    max-width: 1100px;
+  }
+
+  .invoice-form {
+    gap: 12px;
+  }
+
+  .invoice-full-width {
+    grid-template-columns: 1fr !important;
+  }
+
+  .invoice-section-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+  }
+
+  .invoice-section-header h2 {
+    margin: 0;
+    text-align: left;
+    color: #2a4d8d;
+  }
+
+  .invoice-items-table input,
+  .invoice-items-table select {
+    min-width: 120px;
+  }
+
+  .invoice-table-actions {
+    margin-top: 8px;
+  }
+
+  .invoice-visit-card {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    gap: 12px;
+    background: #f8fbff;
+    border: 1px solid #d8e6ff;
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .invoice-summary {
+    display: flex !important;
+    justify-content: flex-end;
+    gap: 24px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .form-error {
+    color: #b42318;
+    margin-top: 8px;
+  }
+
+  .form-success {
+    color: #067647;
+    margin-top: 8px;
+  }
+
+  .invoice-detail-page {
+    max-width: 980px;
+  }
+
+  .invoice-detail-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .invoice-receipt {
+    border: 1px solid #d6dce8;
+    border-radius: 12px;
+    padding: 28px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  }
+
+  .receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid #e6edf8;
+  }
+
+  .receipt-header h1 {
+    margin: 0 0 8px;
+    text-align: left;
+    color: #1f3b7a;
+  }
+
+  .receipt-header p {
+    margin: 0;
+    color: #52607a;
+  }
+
+  .receipt-badge {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: #1f3b7a;
+    font-weight: 700;
+    border: 1px solid #cfe0ff;
+  }
+
+  .receipt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .receipt-grid h2,
+  .receipt-notes h2 {
+    text-align: left;
+    color: #2a4d8d;
+    margin-bottom: 10px;
+  }
+
+  .receipt-grid p,
+  .receipt-notes p {
+    margin: 6px 0;
+  }
+
+  .receipt-totals {
+    margin-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .receipt-notes {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  @media print {
+    body {
+      padding: 0;
+      background: #fff;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .page-container,
+    .invoice-receipt {
+      box-shadow: none;
+      border: none;
+      margin: 0;
+      max-width: none;
+      padding: 0;
+    }
+  }
+  

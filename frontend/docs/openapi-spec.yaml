@@ -1,0 +1,715 @@
+openapi: 3.0.0
+info:
+  title: Pet Adoption API
+  version: 1.0.0
+  description: |
+    API RESTful para gestión de mascotas disponibles para adopción, pacientes y facturación de visitas.
+    Esta API permite buscar mascotas por diferentes criterios, registrar nuevas mascotas,
+    gestionar la información de pacientes, y generar facturas detalladas por visita.
+  contact:
+    name: DUOC UC - CDY2203
+    url: https://www.duoc.cl
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:8080
+    description: Development Server
+  - url: https://api.example.com
+    description: Production Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Token for authentication
+
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+        - species
+        - breed
+        - age
+        - gender
+      properties:
+        id:
+          type: integer
+          description: Identificador único de la mascota
+          example: 1
+        name:
+          type: string
+          description: Nombre de la mascota
+          example: Max
+        species:
+          type: string
+          description: Especie de la mascota
+          example: Perro
+        breed:
+          type: string
+          description: Raza de la mascota
+          example: Golden Retriever
+        age:
+          type: integer
+          description: Edad de la mascota en años
+          example: 3
+        gender:
+          type: string
+          description: Sexo de la mascota
+          enum:
+            - Macho
+            - Hembra
+          example: Macho
+        location:
+          type: string
+          description: Ubicación geográfica de la mascota
+          example: Santiago
+        photos:
+          type: array
+          description: Lista de URLs de fotos de la mascota
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://example.com/foto1.jpg"
+            - "https://example.com/foto2.jpg"
+        status:
+          type: string
+          description: Estado de disponibilidad
+          enum:
+            - available
+            - adopted
+          default: available
+          example: available
+
+    Patient:
+      type: object
+      required:
+        - name
+        - species
+        - breed
+        - age
+        - owner
+      properties:
+        id:
+          type: integer
+          description: Identificador único del paciente
+          example: 1
+        name:
+          type: string
+          description: Nombre del paciente
+          example: Firulais
+        species:
+          type: string
+          description: Especie del paciente
+          example: Perro
+        breed:
+          type: string
+          description: Raza del paciente
+          example: Labrador
+        age:
+          type: integer
+          description: Edad del paciente en años
+          example: 5
+        owner:
+          type: string
+          description: Dueño del paciente
+          example: Juan Pérez
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Usuario
+          example: admin
+        password:
+          type: string
+          format: password
+          description: Contraseña
+          example: password123
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error
+          example: "Error al registrar mascota: Campo requerido"
+
+    InvoiceLineItemType:
+      type: string
+      description: Tipo de detalle de factura
+      enum:
+        - SERVICE
+        - MEDICATION
+        - ADDITIONAL_CHARGE
+
+    InvoiceLineItem:
+      type: object
+      required:
+        - type
+        - description
+        - quantity
+        - unitPrice
+      properties:
+        id:
+          type: integer
+          description: Identificador del detalle
+          example: 1
+        type:
+          $ref: '#/components/schemas/InvoiceLineItemType'
+        description:
+          type: string
+          description: Descripción del servicio, medicamento o cargo
+          example: Consulta general
+        quantity:
+          type: integer
+          description: Cantidad aplicada
+          minimum: 1
+          example: 1
+        unitPrice:
+          type: number
+          format: double
+          description: Precio unitario
+          minimum: 0
+          example: 25000
+        lineTotal:
+          type: number
+          format: double
+          description: Subtotal de la línea (quantity x unitPrice)
+          example: 25000
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Identificador de la factura
+          example: 1
+        appointmentId:
+          type: integer
+          description: Identificador de la visita facturada
+          example: 10
+        issueDate:
+          type: string
+          format: date
+          description: Fecha de emisión
+          example: 2026-03-28
+        vatRate:
+          type: number
+          format: double
+          description: Tasa de IVA aplicada (ejemplo 0.19 para 19%)
+          example: 0.19
+        subtotal:
+          type: number
+          format: double
+          description: Subtotal sin IVA
+          example: 40000
+        vatAmount:
+          type: number
+          format: double
+          description: Monto de IVA
+          example: 7600
+        total:
+          type: number
+          format: double
+          description: Total final de la factura
+          example: 47600
+        notes:
+          type: string
+          description: Observaciones adicionales
+          example: Control en 10 dias.
+        items:
+          type: array
+          description: Detalle de cargos de la visita
+          items:
+            $ref: '#/components/schemas/InvoiceLineItem'
+
+paths:
+  /login:
+    post:
+      tags:
+        - Autenticación
+      summary: Autenticar usuario
+      description: Inicia sesión y obtiene un token JWT para usar en otras operaciones protegidas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                type: string
+                description: Token JWT
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /patients:
+    get:
+      tags:
+        - Pacientes
+      summary: Obtener todos los pacientes
+      description: Recupera la lista completa de pacientes registrados
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de pacientes obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Patient'
+        '500':
+          description: Error interno del servidor
+
+    post:
+      tags:
+        - Pacientes
+      summary: Registrar nuevo paciente
+      description: Crea un nuevo registro de paciente en el sistema
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Patient'
+      responses:
+        '201':
+          description: Paciente registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /patients/{id}:
+    get:
+      tags:
+        - Pacientes
+      summary: Obtener paciente por ID
+      description: Recupera la información de un paciente específico por su identificador
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del paciente
+          example: 1
+      responses:
+        '200':
+          description: Paciente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '404':
+          description: Paciente no encontrado
+        '500':
+          description: Error interno del servidor
+
+  /pets:
+    get:
+      tags:
+        - Mascotas
+      summary: Obtener todas las mascotas
+      description: Recupera la lista completa de mascotas registradas en el sistema
+      responses:
+        '200':
+          description: Lista de mascotas obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '500':
+          description: Error interno del servidor
+
+    post:
+      tags:
+        - Mascotas
+      summary: Registrar nueva mascota
+      description: Crea un nuevo registro de mascota disponible para adopción
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '201':
+          description: Mascota registrada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pets/{id}:
+    get:
+      tags:
+        - Mascotas
+      summary: Obtener mascota por ID
+      description: Recupera la información detallada de una mascota específica
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la mascota
+          example: 1
+      responses:
+        '200':
+          description: Mascota encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          description: Mascota no encontrada
+        '500':
+          description: Error interno del servidor
+
+    put:
+      tags:
+        - Mascotas
+      summary: Actualizar mascota
+      description: Actualiza la información de una mascota existente (cambiar estado a adoptada, etc.)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la mascota a actualizar
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: Mascota actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Mascota no encontrada
+
+    delete:
+      tags:
+        - Mascotas
+      summary: Eliminar mascota
+      description: Elimina un registro de mascota del sistema
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la mascota a eliminar
+          example: 1
+      responses:
+        '200':
+          description: Mascota eliminada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mascota eliminada exitosamente"
+        '404':
+          description: Mascota no encontrada
+        '400':
+          description: Error al eliminar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pets/available:
+    get:
+      tags:
+        - Mascotas
+      summary: Obtener mascotas disponibles
+      description: Recupera la lista de mascotas disponibles para adopción
+      responses:
+        '200':
+          description: Lista de mascotas disponibles obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '500':
+          description: Error interno del servidor
+
+  /pets/search:
+    get:
+      tags:
+        - Mascotas
+      summary: Buscar mascotas por criterios
+      description: |
+        Busca mascotas por uno o varios criterios (especie, género, ubicación, edad).
+        Todos los parámetros son opcionales.
+      parameters:
+        - name: species
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar por especie
+          example: Perro
+
+        - name: gender
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - Macho
+              - Hembra
+          description: Filtrar por sexo
+          example: Macho
+
+        - name: location
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtrar por ubicación
+          example: Santiago
+
+        - name: age
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filtrar por edad exacta
+          example: 3
+
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - available
+              - adopted
+            default: available
+          description: Filtrar por estado de disponibilidad
+          example: available
+
+      responses:
+        '200':
+          description: Búsqueda completada exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '500':
+          description: Error interno del servidor
+
+  /invoices:
+    get:
+      tags:
+        - Facturas
+      summary: Obtener todas las facturas
+      description: Recupera la lista completa de facturas emitidas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de facturas obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+        '500':
+          description: Error interno del servidor
+
+  /invoices/{id}:
+    get:
+      tags:
+        - Facturas
+      summary: Obtener factura por ID
+      description: Recupera una factura específica por su identificador
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la factura
+          example: 1
+      responses:
+        '200':
+          description: Factura encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Factura no encontrada
+        '500':
+          description: Error interno del servidor
+
+  /invoices/appointment/{appointmentId}:
+    get:
+      tags:
+        - Facturas
+      summary: Obtener factura por visita
+      description: Recupera la factura asociada a una visita específica
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la visita
+          example: 10
+      responses:
+        '200':
+          description: Factura encontrada para la visita
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Visita o factura no encontrada
+        '500':
+          description: Error interno del servidor
+
+  /invoices/appointments/{appointmentId}:
+    post:
+      tags:
+        - Facturas
+      summary: Generar factura de visita
+      description: |
+        Genera una factura detallada para una visita, incluyendo servicios,
+        medicamentos, cargos adicionales, subtotal, IVA y total.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la visita a facturar
+          example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                issueDate:
+                  type: string
+                  format: date
+                  example: 2026-03-28
+                vatRate:
+                  type: number
+                  format: double
+                  description: Si no se envía, se usa 0.19
+                  example: 0.19
+                notes:
+                  type: string
+                  example: Paciente estable. Control en 10 dias.
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/InvoiceLineItem'
+      responses:
+        '201':
+          description: Factura generada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Datos inválidos o visita inexistente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Visita no encontrada
+        '409':
+          description: Ya existe factura para la visita
+
+tags:
+  - name: Autenticación
+    description: Operaciones de autenticación y autorización
+  - name: Pacientes
+    description: Gestión de pacientes veterinarios
+  - name: Mascotas
+    description: Gestión de mascotas disponibles para adopción
+  - name: Facturas
+    description: Gestión de facturas detalladas por visita

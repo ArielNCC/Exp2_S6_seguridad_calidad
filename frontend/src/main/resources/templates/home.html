@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - Seguridad y Calidad</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+    <div class="page-container home-page">
+        <div class="home-header">
+            <h1>Bienvenido</h1>
+            <p th:text="${name}"></p>
+        </div>
+        
+        <div class="home-actions">
+            <!-- Botones controlados por JavaScript -->
+            <a id="btnLogin" th:href="@{/login}" class="btn btn-primary" style="display:none;">Iniciar Sesión</a>
+            
+            <a id="btnPatients" th:href="@{/patients}" class="btn btn-primary" style="display:none;">Ver Pacientes</a>
+            <a id="btnAppointments" th:href="@{/appointments}" class="btn btn-primary" style="display:none;">Ver Citas</a>
+            <a id="btnPets" th:href="@{/pets}" class="btn btn-primary" style="display:none;">Ver Mascotas</a>
+            <a id="btnInvoices" th:href="@{/billing}" class="btn btn-primary" style="display:none;">Ver Facturas</a>
+            <button id="btnLogout" class="btn btn-secondary" style="display:none;">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <script src="/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (await hasAuthSession()) {
+                document.getElementById('btnPatients').style.display = 'inline-block';
+                document.getElementById('btnAppointments').style.display = 'inline-block';
+                document.getElementById('btnPets').style.display = 'inline-block';
+                document.getElementById('btnInvoices').style.display = 'inline-block';
+                document.getElementById('btnLogout').style.display = 'inline-block';
+            } else {
+                document.getElementById('btnLogin').style.display = 'inline-block';
+            }
+
+            document.getElementById('btnLogout').addEventListener('click', async function() {
+                await logout();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Generar Factura</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container invoice-page">
+    <h1>Generar factura de visita</h1>
+    <form id="invoiceForm" class="patient-form invoice-form">
+        <div>
+            <label>Visita:</label>
+            <select id="appointmentId" required>
+                <option value="" disabled selected>Selecciona una visita</option>
+            </select>
+        </div>
+        <div>
+            <label>Fecha emisión:</label>
+            <input type="date" id="issueDate" />
+        </div>
+        <div>
+            <label>Tasa IVA:</label>
+            <input type="number" id="vatRate" min="0" step="0.01" value="0.19" />
+        </div>
+        <div class="invoice-visit-card invoice-full-width" id="appointmentSummary">
+            <div><strong>Paciente:</strong> <span id="summaryPatient">Selecciona una visita</span></div>
+            <div><strong>Fecha:</strong> <span id="summaryDate">-</span></div>
+            <div><strong>Hora:</strong> <span id="summaryTime">-</span></div>
+            <div><strong>Motivo:</strong> <span id="summaryReason">-</span></div>
+            <div><strong>Veterinario:</strong> <span id="summaryVeterinarian">-</span></div>
+        </div>
+        <div class="invoice-full-width">
+            <label>Observaciones:</label>
+            <textarea id="notes" rows="3" placeholder="Notas para la factura"></textarea>
+        </div>
+
+        <div class="invoice-section-header invoice-full-width">
+            <h2>Detalle de cargos</h2>
+            <button class="btn btn-secondary" type="button" id="addItemBtn">Agregar item</button>
+        </div>
+
+        <div class="invoice-full-width">
+            <table class="patients-table invoice-items-table">
+                <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Total línea</th>
+                    <th>Acción</th>
+                </tr>
+                </thead>
+                <tbody id="invoiceItemsBody"></tbody>
+            </table>
+        </div>
+
+        <div class="invoice-summary invoice-full-width">
+            <div><strong>Subtotal:</strong> <span id="subtotalValue">$0</span></div>
+            <div><strong>IVA:</strong> <span id="vatValue">$0</span></div>
+            <div><strong>Total:</strong> <span id="totalValue">$0</span></div>
+        </div>
+
+        <div class="form-actions invoice-full-width">
+            <button class="btn btn-primary" type="submit">Emitir factura</button>
+            <a class="btn btn-secondary" href="/billing">Cancelar</a>
+        </div>
+        <div id="errorInvoice" class="form-error"></div>
+        <div id="successInvoice" class="form-success"></div>
+    </form>
+</div>
+<script src="/auth.js"></script>
+<script>
+    const itemTypes = ['SERVICE', 'MEDICATION', 'ADDITIONAL_CHARGE'];
+    const appointmentSelect = document.getElementById('appointmentId');
+    const itemsBody = document.getElementById('invoiceItemsBody');
+    const errorBox = document.getElementById('errorInvoice');
+    const successBox = document.getElementById('successInvoice');
+    const appointmentsById = new Map();
+    const patientsById = new Map();
+
+    function formatCurrency(value) {
+        const amount = Number(value || 0);
+        return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+    }
+
+    function updateAppointmentSummary() {
+        const appointment = appointmentsById.get(String(appointmentSelect.value));
+        const patient = appointment ? patientsById.get(String(appointment.patientId)) : null;
+
+        document.getElementById('summaryPatient').textContent = patient ? `${patient.name} (${patient.owner || 'sin dueño'})` : 'Selecciona una visita';
+        document.getElementById('summaryDate').textContent = appointment?.date || '-';
+        document.getElementById('summaryTime').textContent = appointment?.time || '-';
+        document.getElementById('summaryReason').textContent = appointment?.reason || '-';
+        document.getElementById('summaryVeterinarian').textContent = appointment?.veterinarian || '-';
+    }
+
+    function createItemRow(item = {}) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <select class="item-type" required>
+                    ${itemTypes.map(type => `<option value="${type}" ${item.type === type ? 'selected' : ''}>${type}</option>`).join('')}
+                </select>
+            </td>
+            <td><input class="item-description" type="text" value="${item.description || ''}" required /></td>
+            <td><input class="item-quantity" type="number" min="1" step="1" value="${item.quantity || 1}" required /></td>
+            <td><input class="item-unit-price" type="number" min="0" step="0.01" value="${item.unitPrice || 0}" required /></td>
+            <td class="item-line-total">${formatCurrency((item.quantity || 1) * (item.unitPrice || 0))}</td>
+            <td><button class="btn btn-secondary btn-small" type="button">Quitar</button></td>
+        `;
+
+        row.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('input', updateSummary);
+            element.addEventListener('change', updateSummary);
+        });
+        row.querySelector('button').addEventListener('click', () => {
+            row.remove();
+            updateSummary();
+        });
+
+        itemsBody.appendChild(row);
+        updateSummary();
+    }
+
+    function collectItems() {
+        return Array.from(itemsBody.querySelectorAll('tr')).map(row => {
+            const quantity = Number(row.querySelector('.item-quantity').value || 0);
+            const unitPrice = Number(row.querySelector('.item-unit-price').value || 0);
+            return {
+                type: row.querySelector('.item-type').value,
+                description: row.querySelector('.item-description').value.trim(),
+                quantity,
+                unitPrice
+            };
+        });
+    }
+
+    function updateSummary() {
+        const items = collectItems();
+        let subtotal = 0;
+
+        Array.from(itemsBody.querySelectorAll('tr')).forEach((row, index) => {
+            const quantity = Number(row.querySelector('.item-quantity').value || 0);
+            const unitPrice = Number(row.querySelector('.item-unit-price').value || 0);
+            const lineTotal = quantity * unitPrice;
+            subtotal += lineTotal;
+            row.querySelector('.item-line-total').textContent = formatCurrency(lineTotal);
+        });
+
+        const vatRate = Number(document.getElementById('vatRate').value || 0);
+        const vatAmount = subtotal * vatRate;
+        const total = subtotal + vatAmount;
+
+        document.getElementById('subtotalValue').textContent = formatCurrency(subtotal);
+        document.getElementById('vatValue').textContent = formatCurrency(vatAmount);
+        document.getElementById('totalValue').textContent = formatCurrency(total);
+    }
+
+    async function loadAppointmentsOptions() {
+        try {
+            const [appointmentsResponse, patientsResponse] = await Promise.all([
+                apiFetch('/api/appointments'),
+                apiFetch('/api/patients')
+            ]);
+
+            if (!appointmentsResponse.ok || !patientsResponse.ok) {
+                throw new Error('No fue posible cargar las visitas');
+            }
+
+            const appointments = await appointmentsResponse.json();
+            const patients = await patientsResponse.json();
+
+            patients.forEach(patient => {
+                patientsById.set(String(patient.id), patient);
+            });
+
+            appointments.forEach(appointment => {
+                appointmentsById.set(String(appointment.id), appointment);
+                const patient = patientsById.get(String(appointment.patientId));
+                const patientLabel = patient ? patient.name : `Paciente ${appointment.patientId}`;
+                const option = document.createElement('option');
+                option.value = appointment.id;
+                option.textContent = `Visita ${appointment.id} - ${patientLabel} - ${appointment.date} ${appointment.time}`;
+                appointmentSelect.appendChild(option);
+            });
+
+            const presetAppointmentId = new URLSearchParams(window.location.search).get('appointmentId');
+            if (presetAppointmentId) {
+                appointmentSelect.value = presetAppointmentId;
+            }
+
+            updateAppointmentSummary();
+        } catch (error) {
+            console.error('Frontend: loadAppointmentsOptions error=', error);
+            errorBox.textContent = 'Error cargando las visitas disponibles.';
+        }
+    }
+
+    async function validateNoExistingInvoice(appointmentId) {
+        const response = await apiFetch(`/api/invoices/appointment/${appointmentId}`);
+
+        if (response.status === 200) {
+            throw new Error('La visita seleccionada ya tiene una factura emitida.');
+        }
+
+        if (response.status !== 404) {
+            const body = await response.text();
+            throw new Error(body || 'No fue posible validar la factura existente.');
+        }
+    }
+
+    document.getElementById('addItemBtn').addEventListener('click', () => createItemRow());
+    document.getElementById('vatRate').addEventListener('input', updateSummary);
+    appointmentSelect.addEventListener('change', updateAppointmentSummary);
+
+    document.getElementById('invoiceForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        errorBox.textContent = '';
+        successBox.textContent = '';
+
+        const appointmentId = appointmentSelect.value;
+        const items = collectItems();
+
+        if (!appointmentId) {
+            errorBox.textContent = 'Debes seleccionar una visita.';
+            return;
+        }
+
+        if (!items.length) {
+            errorBox.textContent = 'Debes agregar al menos un item.';
+            return;
+        }
+
+        const invalidItem = items.find(item => !item.description || item.quantity < 1 || item.unitPrice < 0);
+        if (invalidItem) {
+            errorBox.textContent = 'Todos los items deben tener descripción, cantidad válida y precio no negativo.';
+            return;
+        }
+
+        const body = {
+            issueDate: document.getElementById('issueDate').value || null,
+            vatRate: Number(document.getElementById('vatRate').value || 0.19),
+            notes: document.getElementById('notes').value.trim(),
+            items
+        };
+
+        try {
+            await validateNoExistingInvoice(appointmentId);
+
+            const response = await apiFetch(`/api/invoices/appointments/${appointmentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.message || 'No fue posible generar la factura.');
+            }
+
+            successBox.textContent = `Factura ${payload.id} emitida correctamente para la visita ${payload.appointmentId}.`;
+            setTimeout(() => {
+                window.location.href = '/billing';
+            }, 900);
+        } catch (error) {
+            console.error('Frontend: POST /api/invoices/appointments/{appointmentId} error=', error);
+            errorBox.textContent = error.message || 'Error generando la factura.';
+        }
+    });
+
+    document.getElementById('issueDate').value = new Date().toISOString().slice(0, 10);
+    createItemRow({ type: 'SERVICE', quantity: 1, unitPrice: 0 });
+    loadAppointmentsOptions();
+</script>
+</body>
+</html>

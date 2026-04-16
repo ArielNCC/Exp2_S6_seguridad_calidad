@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Agendar Cita</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Agendar nueva cita</h1>
+    <form id="appointmentForm" class="patient-form">
+        <div>
+            <label>Paciente:</label>
+            <select id="patientId" required>
+                <option value="" disabled selected>Selecciona un paciente</option>
+            </select>
+        </div>
+        <div>
+            <label>Fecha:</label>
+            <input type="date" id="date" required />
+        </div>
+        <div>
+            <label>Hora:</label>
+            <input type="time" id="time" required />
+        </div>
+        <div>
+            <label>Motivo:</label>
+            <input type="text" id="reason" required />
+        </div>
+        <div>
+            <label>Veterinario:</label>
+            <input type="text" id="veterinarian" required />
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-secondary" href="/appointments">Cancelar</a>
+        </div>
+        <div id="errorAppointment" style="color: red; margin-top: 1rem;"></div>
+    </form>
+</div>
+<script src="/auth.js"></script>
+<script>
+    async function loadPatientsOptions() {
+        try {
+            console.log('-> Frontend: GET /api/patients (for options)');
+            const response = await apiFetch('/api/patients');
+            console.log('<- Frontend: GET /api/patients (for options) status=' + response.status);
+
+            if (!response.ok) {
+                return;
+            }
+
+            const patients = await response.json();
+            console.log('<- Frontend: GET /api/patients (for options) body=', patients);
+            const select = document.getElementById('patientId');
+            patients.forEach(patient => {
+                const option = document.createElement('option');
+                option.value = patient.id;
+                option.textContent = patient.name;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Frontend: GET /api/patients (for options) error=', err.message, err.stack);
+            document.getElementById('errorAppointment').textContent = 'Error cargando lista de pacientes.';
+        }
+    }
+
+    document.getElementById('appointmentForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const body = {
+            patientId: parseInt(document.getElementById('patientId').value, 10),
+            date: document.getElementById('date').value,
+            time: document.getElementById('time').value,
+            reason: document.getElementById('reason').value,
+            veterinarian: document.getElementById('veterinarian').value
+        };
+
+        try {
+            console.log('-> Frontend: POST /api/appointments body=', body);
+            const response = await apiFetch('/api/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            console.log('<- Frontend: POST /api/appointments status=' + response.status);
+
+            if (!response.ok) {
+                const err = await response.text();
+                console.error('Frontend: POST /api/appointments error response=', err);
+                document.getElementById('errorAppointment').textContent = 'Error: ' + err;
+                return;
+            }
+
+            console.log('<- Frontend: POST /api/appointments success');
+            window.location.href = '/appointments';
+        } catch (err) {
+            console.error('Frontend: POST /api/appointments error=', err);
+            document.getElementById('errorAppointment').textContent = 'Error al agendar cita.';
+        }
+    });
+
+    loadPatientsOptions();
+</script>
+</body>
+</html>

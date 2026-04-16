@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Registrar Paciente</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Registrar nuevo paciente</h1>
+    <form id="patientForm" class="patient-form">
+        <div>
+            <label>Nombre:</label>
+            <input type="text" id="name" required />
+        </div>
+        <div>
+            <label>Especie:</label>
+            <input type="text" id="species" required />
+        </div>
+        <div>
+            <label>Raza:</label>
+            <input type="text" id="breed" required />
+        </div>
+        <div>
+            <label>Edad:</label>
+            <input type="number" id="age" min="0" required />
+        </div>
+        <div>
+            <label>Dueño:</label>
+            <input type="text" id="owner" required />
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-secondary" href="/patients">Cancelar</a>
+        </div>
+        <div id="errorPatient" style="color: red; margin-top: 1rem;"></div>
+    </form>
+</div>
+<script src="/auth.js"></script>
+<script>
+    document.getElementById('patientForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const body = {
+            name: document.getElementById('name').value,
+            species: document.getElementById('species').value,
+            breed: document.getElementById('breed').value,
+            age: parseInt(document.getElementById('age').value, 10),
+            owner: document.getElementById('owner').value
+        };
+
+        try {
+            console.log('-> Frontend: POST /api/patients body=', body);
+            const response = await apiFetch('/api/patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            console.log('<- Frontend: POST /api/patients status=' + response.status);
+
+            if (!response.ok) {
+                const err = await response.text();
+                console.error('Frontend: POST /api/patients error response=', err);
+                document.getElementById('errorPatient').textContent = 'Error: ' + err;
+                return;
+            }
+
+            console.log('<- Frontend: POST /api/patients success');
+            window.location.href = '/patients';
+        } catch (err) {
+            console.error('Frontend: POST /api/patients error=', err);
+            document.getElementById('errorPatient').textContent = 'Error al guardar paciente.';
+        }
+    });
+</script>
+</body>
+</html>
