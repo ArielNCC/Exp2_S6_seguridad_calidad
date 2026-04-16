@@ -2,20 +2,28 @@
 # IDE y Editores
 # ========================================
 .vscode/
-.vscode
 .idea/
-.idea
 *.iml
 *.iws
 *.ipr
 *.swp
 *.swo
 *~
-.DS_Store
-Thumbs.db
 
 # ========================================
-# Maven Build
+# Archivos de Sistema
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ========================================
+# Maven Build (Backend + Frontend)
 # ========================================
 target/
 *.jar
@@ -31,22 +39,25 @@ buildNumber.properties
 .m2/
 
 # ========================================
-# Archivos de Sistema
+# Eclipse / STS
 # ========================================
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-desktop.ini
+.classpath
+.project
+.settings/
+.factorypath
+bin/
 
 # ========================================
 # Docker
 # ========================================
-.openvas
 docker-compose.override.yaml
-.docker
+.docker/
+docker-compose.local*.yaml
+
+# ========================================
+# OpenVAS (No subir a repositorio)
+# ========================================
+openvas/
 
 # ========================================
 # Logs y Temp
@@ -60,28 +71,37 @@ temp/
 # ========================================
 # Configuración Sensible
 # ========================================
-application-prod.properties
-application-prod.yaml
 .env
 .env.local
+.env.*.local
+application-prod.properties
+application-prod.yaml
 *.key
 *.pem
 *.pfx
+*.jks
 
 # ========================================
-# Base de Datos
+# Base de Datos Local
 # ========================================
 *.db
 *.sqlite
 *.sqlite3
 data/
 mysql-data/
+.h2.server.properties
 
 # ========================================
-# Otros
+# IDE específico
 # ========================================
-.classpath
-.project
-.settings/
-bin/
-.factorypath
+.idea/
+*.iml
+.gradle/
+
+# ========================================
+# OS Specific
+# ========================================
+.vscode/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json

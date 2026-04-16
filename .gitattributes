@@ -1,0 +1,44 @@
+# ========================================
+# Normalizar Line Endings
+# ========================================
+* text=auto
+
+# ========================================
+# Windows CRLF
+# ========================================
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf
+
+# ========================================
+# Unix LF
+# ========================================
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile text eol=lf
+docker-compose.yaml text eol=lf
+
+# ========================================
+# Archivos de Código
+# ========================================
+*.java text eol=lf
+*.xml text eol=lf
+*.properties text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.sql text eol=lf
+*.md text eol=lf
+
+# ========================================
+# Binarios (No manipular)
+# ========================================
+*.jar binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.gz binary
+*.tar binary
