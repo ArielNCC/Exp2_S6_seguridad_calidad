@@ -96,14 +96,18 @@
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
 				<version>12.2.0</version> 
-					<executions>
-						<execution>
-							<goals>
-								<goal>check</goal>
-							</goals>
-						</execution>
-					</executions>
-        	</plugin>
+				<configuration>
+					<dataDirectory>C:\Users\nikoc\Downloads\dependency-check-12.1.0-release\dependency-check\data</dataDirectory>
+					<autoUpdate>false</autoUpdate>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
