@@ -58,6 +58,7 @@ docker-compose.local*.yaml
 # Security Scanning
 # ========================================
 openvas/
+dependency-check/
 dependency-check-doc/
 dependency-check-report.html
 *.sarif
