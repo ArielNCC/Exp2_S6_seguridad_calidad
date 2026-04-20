@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Define la red para que OpenVas pueda acceder después
 networks:
   red_s6:

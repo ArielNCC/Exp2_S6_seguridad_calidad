@@ -1,0 +1,574 @@
+{
+  "info": {
+    "_postman_id": "backend-api-collection",
+    "name": "Backend API - Pet Adoption System",
+    "description": "Colección completa de endpoints del Backend (Puerto 8081)\n\nBase URL: http://localhost:8081\n\nAutenticación: JWT Bearer Token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/login",
+              "host": ["{{backend_url}}"],
+              "path": ["login"]
+            },
+            "description": "Obtiene token JWT para autenticarse en endpoints protegidos"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"recepcionista01\",\n  \"email\": \"recep@duocvet.cl\",\n  \"password\": \"recep123\"\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/users/register",
+              "host": ["{{backend_url}}"],
+              "path": ["users", "register"]
+            },
+            "description": "Registra un nuevo usuario con contraseña hasheada en BCrypt"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mascotas (Pets)",
+      "item": [
+        {
+          "name": "Get All Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/pets",
+              "host": ["{{backend_url}}"],
+              "path": ["pets"]
+            },
+            "description": "Lista todas las mascotas (público, sin autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pet by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/pets/1",
+              "host": ["{{backend_url}}"],
+              "path": ["pets", "1"]
+            },
+            "description": "Obtiene mascota por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/pets/available",
+              "host": ["{{backend_url}}"],
+              "path": ["pets", "available"]
+            },
+            "description": "Lista mascotas disponibles para adopción (status='available')"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/pets/search?species=Perro&gender=Macho&location=Santiago&status=available",
+              "host": ["{{backend_url}}"],
+              "path": ["pets", "search"],
+              "query": [
+                {
+                  "key": "species",
+                  "value": "Perro",
+                  "disabled": false
+                },
+                {
+                  "key": "gender",
+                  "value": "Macho",
+                  "disabled": false
+                },
+                {
+                  "key": "location",
+                  "value": "Santiago",
+                  "disabled": false
+                },
+                {
+                  "key": "status",
+                  "value": "available",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Busca mascotas por criterios (todos opcionales)\n- species: Perro, Gato, etc.\n- gender: Macho, Hembra\n- location: Ciudad\n- age: Edad exacta\n- status: available, adopted"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Pet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rocko\",\n  \"species\": \"Perro\",\n  \"breed\": \"Labrador\",\n  \"age\": 2,\n  \"gender\": \"Macho\",\n  \"location\": \"Valparaiso\",\n  \"photos\": [\n    \"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/1024px-Golde33443.jpg\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/pets",
+              "host": ["{{backend_url}}"],
+              "path": ["pets"]
+            },
+            "description": "Crea nueva mascota (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"adopted\",\n  \"location\": \"Santiago\"\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/pets/1",
+              "host": ["{{backend_url}}"],
+              "path": ["pets", "1"]
+            },
+            "description": "Actualiza mascota (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/pets/1",
+              "host": ["{{backend_url}}"],
+              "path": ["pets", "1"]
+            },
+            "description": "Elimina mascota (requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pacientes (Patients)",
+      "item": [
+        {
+          "name": "Get All Patients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/patients",
+              "host": ["{{backend_url}}"],
+              "path": ["patients"]
+            },
+            "description": "Lista todos los pacientes (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/patients/1",
+              "host": ["{{backend_url}}"],
+              "path": ["patients", "1"]
+            },
+            "description": "Obtiene paciente por ID (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Firulais\",\n  \"species\": \"Perro\",\n  \"breed\": \"Labrador\",\n  \"age\": 5,\n  \"owner\": \"Juan Pérez\"\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/patients",
+              "host": ["{{backend_url}}"],
+              "path": ["patients"]
+            },
+            "description": "Crea nuevo paciente (requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Citas (Appointments)",
+      "item": [
+        {
+          "name": "Get All Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/appointments",
+              "host": ["{{backend_url}}"],
+              "path": ["appointments"]
+            },
+            "description": "Lista todas las citas"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Appointment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/appointments/1",
+              "host": ["{{backend_url}}"],
+              "path": ["appointments", "1"]
+            },
+            "description": "Obtiene cita por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Appointments by Patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/appointments/patient/1",
+              "host": ["{{backend_url}}"],
+              "path": ["appointments", "patient", "1"]
+            },
+            "description": "Obtiene todas las citas de un paciente"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"date\": \"2026-04-20\",\n  \"time\": \"14:30:00\",\n  \"reason\": \"Revisión general\",\n  \"veterinarian\": \"Dr. García\"\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/appointments",
+              "host": ["{{backend_url}}"],
+              "path": ["appointments"]
+            },
+            "description": "Crea nueva cita (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"date\": \"2026-04-21\",\n  \"time\": \"15:00:00\",\n  \"reason\": \"Control de seguimiento\",\n  \"veterinarian\": \"Dra. López\"\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/appointments/1",
+              "host": ["{{backend_url}}"],
+              "path": ["appointments", "1"]
+            },
+            "description": "Actualiza cita (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/appointments/1",
+              "host": ["{{backend_url}}"],
+              "path": ["appointments", "1"]
+            },
+            "description": "Elimina cita (requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Facturas (Invoices)",
+      "item": [
+        {
+          "name": "Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/invoices",
+              "host": ["{{backend_url}}"],
+              "path": ["invoices"]
+            },
+            "description": "Lista todas las facturas (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/invoices/1",
+              "host": ["{{backend_url}}"],
+              "path": ["invoices", "1"]
+            },
+            "description": "Obtiene factura por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by Appointment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backend_url}}/invoices/appointment/1",
+              "host": ["{{backend_url}}"],
+              "path": ["invoices", "appointment", "1"]
+            },
+            "description": "Obtiene factura asociada a una cita"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invoice for Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"issueDate\": \"2026-04-20\",\n  \"vatRate\": 0.19,\n  \"notes\": \"Paciente estable. Control en 14 días.\",\n  \"items\": [\n    {\n      \"type\": \"SERVICE\",\n      \"description\": \"Consulta Veterinaria\",\n      \"quantity\": 1,\n      \"unitPrice\": 50000\n    },\n    {\n      \"type\": \"MEDICATION\",\n      \"description\": \"Antibiótico inyectable\",\n      \"quantity\": 1,\n      \"unitPrice\": 25000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{backend_url}}/invoices/appointments/1",
+              "host": ["{{backend_url}}"],
+              "path": ["invoices", "appointments", "1"]
+            },
+            "description": "Crea factura para una cita con línea de detalles\n\nTipos de línea: SERVICE, MEDICATION, ADDITIONAL_CHARGE\n\nAutomáticamente calcula:\n- Subtotal\n- IVA (19%)\n- Total"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documentation",
+      "item": [
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/swagger-ui.html",
+              "host": ["{{backend_url}}"],
+              "path": ["swagger-ui.html"]
+            },
+            "description": "Interfaz interactiva de Swagger"
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI Spec (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/v3/api-docs",
+              "host": ["{{backend_url}}"],
+              "path": ["v3", "api-docs"]
+            },
+            "description": "Especificación OpenAPI en formato JSON"
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI Spec (YAML)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_url}}/v3/api-docs.yaml",
+              "host": ["{{backend_url}}"],
+              "path": ["v3", "api-docs.yaml"]
+            },
+            "description": "Especificación OpenAPI en formato YAML"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "backend_url",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

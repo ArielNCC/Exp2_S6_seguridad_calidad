@@ -1,0 +1,394 @@
+{
+  "info": {
+    "_postman_id": "frontend-api-collection",
+    "name": "Frontend API - Pet Adoption System",
+    "description": "Colección completa de endpoints del Frontend (Puerto 8080)\n\nBase URL: http://localhost:8080\n\nEl Frontend actúa como proxy hacia el Backend\nAutenticación: JWT en Cookie HTTP-only",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{frontend_url}}/api/auth/login",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Autentica usuario y retorna token JWT en cookie HTTP-only\n\nRespuesta: 204 No Content (con cookie de autenticación en Set-Cookie header)"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/auth/logout",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Elimina la cookie de autenticación (logout)"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/auth/session",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "auth", "session"]
+            },
+            "description": "Verifica si hay sesión activa\n\nRespuesta:\n- 204 No Content: Sesión activa\n- 401 Unauthorized: Sin sesión"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mascotas (Pets)",
+      "item": [
+        {
+          "name": "Get All Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/pets",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "pets"]
+            },
+            "description": "Lista todas las mascotas (público, sin autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/pets/available",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "pets", "available"]
+            },
+            "description": "Lista mascotas disponibles para adopción"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/pets/search?species=Perro&gender=Macho&location=Santiago",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "pets", "search"],
+              "query": [
+                {
+                  "key": "species",
+                  "value": "Perro",
+                  "disabled": false
+                },
+                {
+                  "key": "gender",
+                  "value": "Macho",
+                  "disabled": false
+                },
+                {
+                  "key": "location",
+                  "value": "Santiago",
+                  "disabled": false
+                },
+                {
+                  "key": "age",
+                  "value": "3",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "available",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Busca mascotas por criterios (todos opcionales)\n\nEl Frontend actúa como proxy y reenvía al Backend"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Pet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rocko\",\n  \"species\": \"Perro\",\n  \"breed\": \"Labrador\",\n  \"age\": 2,\n  \"gender\": \"Macho\",\n  \"location\": \"Valparaiso\",\n  \"photos\": [\n    \"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/1024px-Golde33443.jpg\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{frontend_url}}/api/pets",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "pets"]
+            },
+            "description": "Crea nueva mascota (requiere autenticación)\n\nLa cookie debe estar automáticamente incluida por Postman"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"adopted\",\n  \"location\": \"Santiago\"\n}"
+            },
+            "url": {
+              "raw": "{{frontend_url}}/api/pets/1",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "pets", "1"]
+            },
+            "description": "Actualiza mascota (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/pets/1",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "pets", "1"]
+            },
+            "description": "Elimina mascota (requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pacientes (Patients)",
+      "item": [
+        {
+          "name": "Get All Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/patients",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "patients"]
+            },
+            "description": "Lista todos los pacientes (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Firulais\",\n  \"species\": \"Perro\",\n  \"breed\": \"Labrador\",\n  \"age\": 5,\n  \"owner\": \"Juan Pérez\"\n}"
+            },
+            "url": {
+              "raw": "{{frontend_url}}/api/patients",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "patients"]
+            },
+            "description": "Crea nuevo paciente (requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Citas (Appointments)",
+      "item": [
+        {
+          "name": "Get All Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/appointments",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "appointments"]
+            },
+            "description": "Lista todas las citas (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"date\": \"2026-04-20\",\n  \"time\": \"14:30:00\",\n  \"reason\": \"Revisión general\",\n  \"veterinarian\": \"Dr. García\"\n}"
+            },
+            "url": {
+              "raw": "{{frontend_url}}/api/appointments",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "appointments"]
+            },
+            "description": "Crea nueva cita (requiere autenticación)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Facturas (Invoices)",
+      "item": [
+        {
+          "name": "Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/invoices",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "invoices"]
+            },
+            "description": "Lista todas las facturas (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/invoices/1",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "invoices", "1"]
+            },
+            "description": "Obtiene factura por ID (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by Appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/api/invoices/appointment/1",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "invoices", "appointment", "1"]
+            },
+            "description": "Obtiene factura asociada a una cita (requiere autenticación)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invoice for Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"issueDate\": \"2026-04-20\",\n  \"vatRate\": 0.19,\n  \"notes\": \"Paciente estable. Control en 14 días.\",\n  \"items\": [\n    {\n      \"type\": \"SERVICE\",\n      \"description\": \"Consulta Veterinaria\",\n      \"quantity\": 1,\n      \"unitPrice\": 50000\n    },\n    {\n      \"type\": \"MEDICATION\",\n      \"description\": \"Antibiótico inyectable\",\n      \"quantity\": 1,\n      \"unitPrice\": 25000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{frontend_url}}/api/invoices/appointments/1",
+              "host": ["{{frontend_url}}"],
+              "path": ["api", "invoices", "appointments", "1"]
+            },
+            "description": "Crea factura para una cita (requiere autenticación)\n\nEl Frontend reenvía al Backend con el JWT token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Frontend Pages",
+      "item": [
+        {
+          "name": "Home",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/",
+              "host": ["{{frontend_url}}"],
+              "path": ["/"]
+            },
+            "description": "Página de inicio (Thymeleaf HTML)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{frontend_url}}/login",
+              "host": ["{{frontend_url}}"],
+              "path": ["login"]
+            },
+            "description": "Página de login (Thymeleaf HTML)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "frontend_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}
