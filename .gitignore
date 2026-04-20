@@ -55,9 +55,12 @@ docker-compose.override.yaml
 docker-compose.local*.yaml
 
 # ========================================
-# OpenVAS (No subir a repositorio)
+# Security Scanning
 # ========================================
 openvas/
+dependency-check-doc/
+dependency-check-report.html
+*.sarif
 
 # ========================================
 # Logs y Temp
