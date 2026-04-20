@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS user (
 
 INSERT INTO user (username, email, password) VALUES
 ('admin', 'admin@ejemplo.com', 'password123'),
-('user1', 'user1@ejemplo.com', 'password123');
+('user1', 'user1@ejemplo.com', 'password123'),
+('user2', 'user2@ejemplo.com', 'password123');
 
 -- ============================================
 -- 2. TABLA DE PACIENTES
